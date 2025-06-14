@@ -49,6 +49,6 @@ jobs:
         if: github.event_name == 'pull_request'
         uses: paambaati/codeclimate-action@v3.0.0
         with:
-          coverage_command: go test -coverpkg=./... ./...
+          coverageCommand: go test -coverpkg=./... ./...
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
