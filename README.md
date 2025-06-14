@@ -1,10 +1,9 @@
 # Go Kafka Gateway
 
-![Build](https://img.shields.io/github/actions/workflow/status/BlurredDev/go-kafka-gateway/ci.yml?branch=main)
-![Docker Image](https://img.shields.io/docker/pulls/BlurredDev/go-kafka-gateway)
-![License](https://img.shields.io/github/license/BlurredDev/go-kafka-gateway)
-![Go Version](https://img.shields.io/github/go-mod/go-version/BlurredDev/go-kafka-gateway)
-![Last Commit](https://img.shields.io/github/last-commit/BlurredDev/go-kafka-gateway)
+[![Go Report Card](https://goreportcard.com/badge/github.com/BlurredDev/go-kafka-gateway)](https://goreportcard.com/report/github.com/BlurredDev/go-kafka-gateway)
+[![Build](https://github.com/BlurredDev/go-kafka-gateway/actions/workflows/test.yml/badge.svg)](https://github.com/BlurredDev/go-kafka-gateway/actions/workflows/test.yml)
+[![Coverage](https://img.shields.io/badge/coverage-100%25-brightgreen)](./coverage-report.html)
+[![License](https://img.shields.io/github/license/BlurredDev/go-kafka-gateway)](https://github.com/BlurredDev/go-kafka-gateway/blob/main/LICENSE)
 
 ---
 
@@ -21,6 +20,7 @@
 - ✅ Built in Go for performance and simplicity  
 - ✅ Stateless, production-ready microservice  
 - ✅ Easily containerized (UBI 9 base for enterprise use)  
+- ✅ Automatic fallback to Dead Letter Queue (DLQ) on message delivery failure  
 
 ---
 
@@ -60,6 +60,7 @@ docker build -t BlurredDev/go-kafka-gateway .
 docker run -p 8080:8080 \
   -e KAFKA_BROKER=kafka.example.com:9092 \
   -e KAFKA_TOPIC=my-topic \
+  -e KAFKA_DLQ_TOPIC=my-dlq-topic \
   BlurredDev/go-kafka-gateway
 ```
 
@@ -74,14 +75,29 @@ curl -X POST http://localhost:8080/publish \
 
 ⸻
 
+### DLQ (Dead Letter Queue) Support
+
+The gateway supports a Dead Letter Queue (DLQ) to improve reliability. If a message fails to be delivered to the primary Kafka topic (e.g., due to broker issues or serialization errors), the message will automatically be sent to the configured DLQ topic. This ensures no data is lost and allows downstream systems to handle or inspect problematic messages separately.
+
+A message will be routed to the DLQ if the attempt to publish to the main Kafka topic fails — typically due to:
+- Kafka broker/network errors
+- Partition unavailability
+- Message serialization failures
+
+🔎 DLQ logic is implemented in [`internal/kafka/producer.go`](./internal/kafka/producer.go)
+
+💡 If `KAFKA_DLQ_TOPIC` is not set, failed messages will be dropped and logged instead of retried.
+
+---
+
 🔧 Environment Variables
 
-|Variable	|Description	Default|
-| ------------- |:-------------:|
-|KAFKA_BROKER|	Kafka bootstrap server address	kafka:9092|
-|KAFKA_TOPIC|	Kafka topic to publish 
-|KAFKA_DQL_TOPIC |Kafka secondary topic to preserve message 
-|HTTP_ADDR	|HTTP server binding address	:8080
+| Variable       | Description                              | Default     |
+| -------------- |:-------------------------------------:|:-----------:|
+| KAFKA_BROKER   | Kafka bootstrap server address          | kafka:9092  |
+| KAFKA_TOPIC    | Kafka topic to publish messages to      | (required)  |
+| KAFKA_DLQ_TOPIC| Kafka Dead Letter Queue topic for fallback messages | (optional) |
+| HTTP_ADDR      | HTTP server binding address              | :8080       |
 
 
 ⸻

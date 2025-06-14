@@ -1,0 +1,297 @@
+
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+		<title>gateway: Go Coverage Report</title>
+		<style>
+			body {
+				background: black;
+				color: rgb(80, 80, 80);
+			}
+			body, pre, #legend span {
+				font-family: Menlo, monospace;
+				font-weight: bold;
+			}
+			#topbar {
+				background: black;
+				position: fixed;
+				top: 0; left: 0; right: 0;
+				height: 42px;
+				border-bottom: 1px solid rgb(80, 80, 80);
+			}
+			#content {
+				margin-top: 50px;
+			}
+			#nav, #legend {
+				float: left;
+				margin-left: 10px;
+			}
+			#legend {
+				margin-top: 12px;
+			}
+			#nav {
+				margin-top: 10px;
+			}
+			#legend span {
+				margin: 0 5px;
+			}
+			.cov0 { color: rgb(192, 0, 0) }
+.cov1 { color: rgb(128, 128, 128) }
+.cov2 { color: rgb(116, 140, 131) }
+.cov3 { color: rgb(104, 152, 134) }
+.cov4 { color: rgb(92, 164, 137) }
+.cov5 { color: rgb(80, 176, 140) }
+.cov6 { color: rgb(68, 188, 143) }
+.cov7 { color: rgb(56, 200, 146) }
+.cov8 { color: rgb(44, 212, 149) }
+.cov9 { color: rgb(32, 224, 152) }
+.cov10 { color: rgb(20, 236, 155) }
+
+		</style>
+	</head>
+	<body>
+		<div id="topbar">
+			<div id="nav">
+				<select id="files">
+				
+				<option value="file0">github.com/BlurredDev/go-kafka-gateway/cmd/gateway/main.go (100.0%)</option>
+				
+				<option value="file1">github.com/BlurredDev/go-kafka-gateway/internal/config/config.go (100.0%)</option>
+				
+				<option value="file2">github.com/BlurredDev/go-kafka-gateway/internal/handler/publish.go (100.0%)</option>
+				
+				<option value="file3">github.com/BlurredDev/go-kafka-gateway/internal/kafka/producer.go (100.0%)</option>
+				
+				</select>
+			</div>
+			<div id="legend">
+				<span>not tracked</span>
+			
+				<span class="cov0">no coverage</span>
+				<span class="cov1">low coverage</span>
+				<span class="cov2">*</span>
+				<span class="cov3">*</span>
+				<span class="cov4">*</span>
+				<span class="cov5">*</span>
+				<span class="cov6">*</span>
+				<span class="cov7">*</span>
+				<span class="cov8">*</span>
+				<span class="cov9">*</span>
+				<span class="cov10">high coverage</span>
+			
+			</div>
+		</div>
+		<div id="content">
+		
+		<pre class="file" id="file0" style="display: none">package main
+
+import (
+        "log"
+        "net/http"
+
+        "github.com/BlurredDev/go-kafka-gateway/internal/config"
+        "github.com/BlurredDev/go-kafka-gateway/internal/handler"
+        "github.com/BlurredDev/go-kafka-gateway/internal/kafka"
+        "github.com/gorilla/mux"
+)
+
+func Run(cfg config.Config) error <span class="cov10" title="3">{
+        var sender handler.Sender = kafka.NewProducer(cfg.KafkaBroker, cfg.KafkaTopic, cfg.DLQTopic)
+        defer sender.(*kafka.Producer).Close()
+
+        r := mux.NewRouter()
+        r.HandleFunc("/publish", handler.MakePublishHandler(sender)).Methods("POST")
+
+        // Add 405 Method Not Allowed handler
+        r.MethodNotAllowedHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) </span><span class="cov6" title="2">{
+                w.WriteHeader(405)
+        }</span>)
+
+        <span class="cov10" title="3">log.Printf("Starting gateway on %s", cfg.HTTPAddr)
+        return http.ListenAndServe(cfg.HTTPAddr, r)</span>
+}
+
+func StartGateway() error <span class="cov6" title="2">{
+        cfg := config.Load()
+        return Run(cfg)
+}</span>
+
+func main() <span class="cov1" title="1">{
+        if err := StartGateway(); err != nil </span><span class="cov1" title="1">{
+                log.Fatalf("HTTP server failed: %v", err)
+        }</span>
+}
+</pre>
+		
+		<pre class="file" id="file1" style="display: none">package config
+
+import "os"
+
+type Config struct {
+        KafkaBroker string
+        KafkaTopic  string
+        HTTPAddr    string
+        DLQTopic    string // e.g. from env: KAFKA_DLQ_TOPIC
+}
+
+func Load() Config <span class="cov5" title="4">{
+        return Config{
+                KafkaBroker: getEnv("KAFKA_BROKER", "localhost:9092"),
+                KafkaTopic:  getEnv("KAFKA_TOPIC", "default-topic"),
+                DLQTopic:    getEnv("KAFKA_DLQ_TOPIC", "default-dql-topic"),
+                HTTPAddr:    getEnv("HTTP_ADDR", ":8080"),
+        }
+}</span>
+
+func getEnv(key, fallback string) string <span class="cov10" title="16">{
+        if val, ok := os.LookupEnv(key); ok </span><span class="cov4" title="3">{
+                return val
+        }</span>
+        <span class="cov9" title="13">return fallback</span>
+}
+</pre>
+		
+		<pre class="file" id="file2" style="display: none">package handler
+
+import (
+        "encoding/json"
+        "io"
+        "log"
+        "net/http"
+
+        "github.com/google/uuid"
+)
+
+type Sender interface {
+        Send(msg []byte, correlationID string) error
+}
+
+func MakePublishHandler(sender Sender) http.HandlerFunc <span class="cov10" title="15">{
+        return func(w http.ResponseWriter, r *http.Request) </span><span class="cov9" title="12">{
+                body, err := io.ReadAll(r.Body)
+                if err != nil || len(body) == 0 </span><span class="cov5" title="4">{
+                        http.Error(w, "Invalid request body", http.StatusBadRequest)
+                        return
+                }</span>
+                <span class="cov7" title="8">defer r.Body.Close()
+
+                if !json.Valid(body) </span><span class="cov1" title="1">{
+                        http.Error(w, "Invalid JSON", http.StatusBadRequest)
+                        return
+                }</span>
+
+                <span class="cov7" title="7">correlationID := r.Header.Get("X-Correlation-Id")
+                if correlationID == "" </span><span class="cov6" title="6">{
+                        correlationID = uuid.New().String()
+                }</span>
+
+                <span class="cov7" title="7">if err := sender.Send(body, correlationID); err != nil </span><span class="cov1" title="1">{
+                        log.Printf("Failed to send to Kafka: %v", err)
+                        http.Error(w, "Failed to send message", http.StatusInternalServerError)
+                        return
+                }</span>
+
+                <span class="cov6" title="6">w.WriteHeader(http.StatusAccepted)</span>
+        }
+}
+</pre>
+		
+		<pre class="file" id="file3" style="display: none">package kafka
+
+import (
+        "context"
+        "github.com/segmentio/kafka-go"
+        "log"
+)
+
+type writerInterface interface {
+        WriteMessages(context.Context, ...kafka.Message) error
+        Close() error
+}
+
+type Producer struct {
+        mainWriter writerInterface
+        dlqWriter  writerInterface
+}
+
+func NewProducer(broker, topic, dlqTopic string) *Producer <span class="cov10" title="4">{
+        return &amp;Producer{
+                mainWriter: &amp;kafka.Writer{
+                        Addr:         kafka.TCP(broker),
+                        Topic:        topic,
+                        Balancer:     &amp;kafka.LeastBytes{},
+                        RequiredAcks: kafka.RequireAll,
+                },
+                dlqWriter: &amp;kafka.Writer{
+                        Addr:         kafka.TCP(broker),
+                        Topic:        dlqTopic,
+                        Balancer:     &amp;kafka.LeastBytes{},
+                        RequiredAcks: kafka.RequireAll,
+                },
+        }
+}</span>
+
+func (p *Producer) Send(message []byte, correlationID string) error <span class="cov8" title="3">{
+        msg := kafka.Message{
+                Key:   []byte(correlationID),
+                Value: message,
+                Headers: []kafka.Header{
+                        {
+                                Key:   "X-Correlation-Id",
+                                Value: []byte(correlationID),
+                        },
+                },
+        }
+
+        err := p.mainWriter.WriteMessages(context.Background(), msg)
+        if err != nil &amp;&amp; p.dlqWriter != nil </span><span class="cov5" title="2">{
+                log.Printf("Main Kafka send failed: %v. Writing to DLQ...", err)
+                dlqErr := p.dlqWriter.WriteMessages(context.Background(), msg)
+                if dlqErr != nil </span><span class="cov1" title="1">{
+                        log.Printf("Failed to write to DLQ as well: %v", dlqErr)
+                }</span>
+                <span class="cov5" title="2">return err</span>
+        }
+
+        <span class="cov1" title="1">return err</span>
+}
+
+func (p *Producer) Close() error <span class="cov8" title="3">{
+        if p.dlqWriter != nil </span><span class="cov8" title="3">{
+                _ = p.dlqWriter.Close()
+        }</span>
+        <span class="cov8" title="3">return p.mainWriter.Close()</span>
+}
+</pre>
+		
+		</div>
+	</body>
+	<script>
+	(function() {
+		var files = document.getElementById('files');
+		var visible;
+		files.addEventListener('change', onChange, false);
+		function select(part) {
+			if (visible)
+				visible.style.display = 'none';
+			visible = document.getElementById(part);
+			if (!visible)
+				return;
+			files.value = part;
+			visible.style.display = 'block';
+			location.hash = part;
+		}
+		function onChange() {
+			select(files.value);
+			window.scrollTo(0, 0);
+		}
+		if (location.hash != "") {
+			select(location.hash.substr(1));
+		}
+		if (!visible) {
+			select("file0");
+		}
+	})();
+	</script>
+</html>
