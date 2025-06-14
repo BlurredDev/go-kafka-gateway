@@ -27,14 +27,19 @@ jobs:
         id: bump_version
         run: |
           tag=${{ steps.get_tag.outputs.latest_tag }}
-          # Extract numbers
           IFS='.' read -r -a parts <<< "${tag#v}"
           major=${parts[0]}
           minor=${parts[1]}
           patch=${parts[2]}
-          patch=$((patch + 1))
-          new_tag="v$major.$minor.$patch"
-          echo "new_tag=$new_tag" >> $GITHUB_OUTPUT
+
+          while true; do
+            patch=$((patch + 1))
+            new_tag="v$major.$minor.$patch"
+            if ! git rev-parse "$new_tag" >/dev/null 2>&1; then
+              echo "new_tag=$new_tag" >> $GITHUB_OUTPUT
+              break
+            fi
+          done
 
       - name: Create new tag
         run: |
