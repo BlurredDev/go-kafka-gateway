@@ -280,11 +280,11 @@ func (p *Producer) Send(message []byte, correlationID string) error <span class=
         <span class="cov1" title="1">return err</span>
 }
 
-func (p *Producer) Close() error <span class="cov8" title="3">{
-        if p.dlqWriter != nil </span><span class="cov8" title="3">{
+func (p *Producer) Close() error <span class="cov5" title="2">{
+        if p.dlqWriter != nil </span><span class="cov5" title="2">{
                 _ = p.dlqWriter.Close()
         }</span>
-        <span class="cov8" title="3">return p.mainWriter.Close()</span>
+        <span class="cov5" title="2">return p.mainWriter.Close()</span>
 }
 </pre>
 		
