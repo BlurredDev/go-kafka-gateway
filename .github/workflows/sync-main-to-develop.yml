@@ -1,0 +1,36 @@
+name: Sync Main into Develop
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  merge:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write  # needed to push commits
+      pull-requests: write
+
+    steps:
+      - name: Checkout develop branch
+        uses: actions/checkout@v3
+        with:
+          ref: develop
+          fetch-depth: 0  # fetch all history for merging
+
+      - name: Setup Git
+        run: |
+          git config user.name "GKG Bot"
+          git config user.email "gkg-bot@users.noreply.github.com"
+
+      - name: Merge main into develop
+        run: |
+          git fetch origin main
+          git merge origin/main --no-edit
+
+      - name: Push changes to develop
+        run: |
+          git push origin develop
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
