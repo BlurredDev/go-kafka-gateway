@@ -52,8 +52,14 @@ jobs:
 
       - name: Check coverage does not decrease
         if: github.event_name == 'pull_request'
-        uses: paambaati/codeclimate-action@v3.0.0
-        with:
-          coverageCommand: go test -coverpkg=./... $(go list ./... | grep -v '/internal/stress') ./...
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          go test -coverpkg=./... -coverprofile=pr-coverage.out $(go list ./... | grep -v '/internal/stress') -covermode=atomic
+          go tool cover -func=pr-coverage.out | tee pr-coverage.txt
+          total=$(grep total: pr-coverage.txt | awk '{print substr($3, 1, length($3)-1)}')
+          echo "PR coverage: $total%"
+          threshold=100
+          result=$(echo "$total < $threshold" | bc -l)
+          if [ "$result" -eq 1 ]; then
+            echo "Coverage dropped below $threshold%"
+            exit 1
+          fi
