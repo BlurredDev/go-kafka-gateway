@@ -59,9 +59,11 @@
 				
 				<option value="file1">github.com/BlurredDev/go-kafka-gateway/internal/config/config.go (100.0%)</option>
 				
-				<option value="file2">github.com/BlurredDev/go-kafka-gateway/internal/handler/publish.go (100.0%)</option>
+				<option value="file2">github.com/BlurredDev/go-kafka-gateway/internal/handler/health.go (100.0%)</option>
 				
-				<option value="file3">github.com/BlurredDev/go-kafka-gateway/internal/kafka/producer.go (100.0%)</option>
+				<option value="file3">github.com/BlurredDev/go-kafka-gateway/internal/handler/publish.go (100.0%)</option>
+				
+				<option value="file4">github.com/BlurredDev/go-kafka-gateway/internal/kafka/producer.go (100.0%)</option>
 				
 				</select>
 			</div>
@@ -102,7 +104,7 @@ func Run(cfg config.Config) error <span class="cov10" title="3">{
 
         r := mux.NewRouter()
         r.HandleFunc("/publish", handler.MakePublishHandler(sender)).Methods("POST")
-
+        r.Handle("/healthcheck", handler.NewHealthHandler()).Methods("GET")
         // Add 405 Method Not Allowed handler
         r.MethodNotAllowedHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) </span><span class="cov6" title="2">{
                 w.WriteHeader(405)
@@ -155,6 +157,27 @@ func getEnv(key, fallback string) string <span class="cov10" title="16">{
 		<pre class="file" id="file2" style="display: none">package handler
 
 import (
+        "net/http"
+)
+
+// HealthHandler handles the /healthz route.
+type HealthHandler struct{}
+
+// NewHealthHandler creates and returns a new HealthHandler.
+func NewHealthHandler() *HealthHandler <span class="cov10" title="4">{
+        return &amp;HealthHandler{}
+}</span>
+
+// ServeHTTP implements the http.Handler interface for HealthHandler.
+func (h *HealthHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) <span class="cov1" title="1">{
+        w.WriteHeader(http.StatusOK)
+        w.Write([]byte("ok"))
+}</span>
+</pre>
+		
+		<pre class="file" id="file3" style="display: none">package handler
+
+import (
         "encoding/json"
         "io"
         "log"
@@ -197,7 +220,7 @@ func MakePublishHandler(sender Sender) http.HandlerFunc <span class="cov10" titl
 }
 </pre>
 		
-		<pre class="file" id="file3" style="display: none">package kafka
+		<pre class="file" id="file4" style="display: none">package kafka
 
 import (
         "context"

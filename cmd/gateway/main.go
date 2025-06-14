@@ -16,7 +16,7 @@ func Run(cfg config.Config) error {
 
 	r := mux.NewRouter()
 	r.HandleFunc("/publish", handler.MakePublishHandler(sender)).Methods("POST")
-
+	r.Handle("/healthcheck", handler.NewHealthHandler()).Methods("GET")
 	// Add 405 Method Not Allowed handler
 	r.MethodNotAllowedHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(405)
