@@ -1,0 +1,39 @@
+
+
+# Binaries
+/gateway
+
+# Build and dependency directories
+/bin/
+/build/
+/dist/
+/vendor/
+
+# Go files
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+
+# IDE and editor settings
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Docker artifacts
+*.container
+docker-compose.override.yml
+
+# Environment files
+.env
