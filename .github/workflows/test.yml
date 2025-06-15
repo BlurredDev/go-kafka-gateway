@@ -1,0 +1,65 @@
+name: Go Build & Test
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  build:
+    name: Build & Test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Go 1.24.1
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.24.1'
+
+      - name: Install dependencies
+        run: go mod tidy
+
+      - name: Build
+        run: go build ./...
+
+      - name: Clear Go module and build cache
+        run: |
+          go clean -modcache
+          go clean -cache
+
+      - name: Run tests with coverage
+        run: |
+          go test -v -coverpkg=./... -coverprofile=coverage.out $(go list ./... | grep -v '/internal/stress') -covermode=atomic
+          go tool cover -func=coverage.out
+          go tool cover -html=coverage.out -o coverage.html
+
+      - name: Commit coverage files
+        if: github.event_name == 'push'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config user.name "GKG Bot — Go Kafka Genius"
+          git config user.email "gkg-bot@users.noreply.github.com"
+          git add coverage.out coverage.html
+          git diff --quiet && git diff --staged --quiet || git commit -m "ci: update coverage reports"
+          git push origin HEAD:${{ github.ref }}
+
+      - name: Check coverage does not decrease
+        if: github.event_name == 'pull_request'
+        run: |
+          go test -coverpkg=./... -coverprofile=pr-coverage.out $(go list ./... | grep -v '/internal/stress') -covermode=atomic
+          go tool cover -func=pr-coverage.out | tee pr-coverage.txt
+          total=$(grep total: pr-coverage.txt | awk '{print substr($3, 1, length($3)-1)}')
+          echo "PR coverage: $total%"
+          threshold=100
+          result=$(echo "$total < $threshold" | bc -l)
+          if [ "$result" -eq 1 ]; then
+            echo "Coverage dropped below $threshold%"
+            exit 1
+          fi

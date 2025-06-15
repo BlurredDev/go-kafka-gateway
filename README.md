@@ -1,8 +1,9 @@
 # Go Kafka Gateway
 
 [![Go Report Card](https://goreportcard.com/badge/github.com/BlurredDev/go-kafka-gateway)](https://goreportcard.com/report/github.com/BlurredDev/go-kafka-gateway)
-[![Build](https://github.com/BlurredDev/go-kafka-gateway/actions/workflows/test.yml/badge.svg)](https://github.com/BlurredDev/go-kafka-gateway/actions/workflows/test.yml)
-[![Coverage](https://img.shields.io/badge/coverage-100%25-brightgreen)](./coverage-report.html)
+[![Build Status](https://github.com/BlurredDev/go-kafka-gateway/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/BlurredDev/go-kafka-gateway/actions/workflows/test.yml)
+[![Coverage](https://img.shields.io/badge/coverage-100%25-brightgreen)](./coverage.html)
+[![Release](https://img.shields.io/github/v/release/BlurredDev/go-kafka-gateway?label=release&style=flat-square)](https://github.com/BlurredDev/go-kafka-gateway/releases)
 [![License](https://img.shields.io/github/license/BlurredDev/go-kafka-gateway)](https://github.com/BlurredDev/go-kafka-gateway/blob/main/LICENSE)
 
 ---
